@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: category-service
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: category-service
+  template:
+    metadata:
+      labels:
+        app: category-service
+    spec:
+      containers:
+      - name: category-service
+        image: mohamedelrefy20/category-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9000
+        env:
+        - name: SPRING_SECURITY_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: microservices-config
+              key: SPRING_SECURITY_LOG_LEVEL
+        - name: eureka.client.service-url.defaultZone
+          value: "http://eureka-server:8761/eureka/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: category-service
+  namespace: microservices
+spec:
+  selector:
+    app: category-service
+  ports:
+  - port: 9000
+    targetPort: 9000
+  type: ClusterIP

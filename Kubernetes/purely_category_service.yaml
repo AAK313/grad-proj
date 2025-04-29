@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: purely-category-service
+  namespace: microservices
+spec:
+  serviceName: "purely-category-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: purely-category-service
+  template:
+    metadata:
+      labels:
+        app: purely-category-service
+    spec:
+      containers:
+      - name: purely-category-service
+        image: mongo:4.4
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_DATABASE
+          value: "purely_category_service"
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "root"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "example"  # Consider using a Secret for production
+        volumeMounts:
+        - name: purely-category-service-data
+          mountPath: /data/db
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d/
+      volumes:
+      - name: init-script
+        emptyDir: {}  # You'll need to use ConfigMaps for initialization scripts
+  volumeClaimTemplates:
+  - metadata:
+      name: purely-category-service-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: purely-category-service
+  namespace: microservices
+spec:
+  selector:
+    app: purely-category-service
+  ports:
+  - port: 27017
+    targetPort: 27017
+  type: ClusterIP
